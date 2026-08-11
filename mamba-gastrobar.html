@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mamba Gastrobar — Langreo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Lora:ital@0;1&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+  :root{
+    --bg:#0e1712;
+    --bg-2:#172019;
+    --neon-green:#43ffa0;
+    --neon-green-dim:#2fcf82;
+    --neon-pink:#ff5fa8;
+    --rattan:#c9974f;
+    --cream:#f1ede2;
+    --line: rgba(241,237,226,0.14);
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html{scroll-behavior:smooth;}
+  body{ background:var(--bg); color:var(--cream); font-family:'Lora', serif; overflow-x:hidden; }
+  .eyebrow{ font-family:'Space Mono', monospace; letter-spacing:0.18em; text-transform:uppercase; font-size:0.72rem; color:var(--neon-green); }
+  h1,h2,h3{ font-family:'Archivo Black', sans-serif; text-transform:uppercase; }
+
+  nav{ position:fixed; top:0; left:0; right:0; z-index:50; display:flex; justify-content:space-between; align-items:center; padding:22px 6vw; mix-blend-mode:difference; }
+  nav .brand{ font-family:'Archivo Black', sans-serif; font-size:1rem; letter-spacing:0.05em; }
+  nav ul{ list-style:none; display:none; gap:28px; font-family:'Space Mono', monospace; font-size:0.75rem; text-transform:uppercase; letter-spacing:0.1em;}
+  nav a{ color:var(--cream); text-decoration:none; }
+  @media(min-width:720px){ nav ul{ display:flex; } }
+
+  .hero{ position:relative; min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:0 6vw; overflow:hidden; }
+  .hero-bg{ position:absolute; inset:0; background-image:url('mamba-fotos/letrero-neon.png'); background-size:cover; background-position:center; filter:brightness(0.38) saturate(1.15); }
+  #ember-canvas{ position:absolute; inset:0; width:100%; height:100%; opacity:0.9; mix-blend-mode:screen; }
+  .hero-inner{ position:relative; z-index:2; }
+  .hero .kicker{ font-family:'Space Mono', monospace; font-size:0.72rem; letter-spacing:0.2em; color:var(--neon-pink); text-transform:uppercase; }
+  .hero h1{
+    font-size:clamp(2.8rem, 9vw, 5.4rem); line-height:0.9; letter-spacing:-0.01em; margin:16px 0 6px;
+    color:var(--cream);
+    text-shadow: 0 0 18px rgba(67,255,160,0.55), 0 0 46px rgba(67,255,160,0.25);
+  }
+  .hero .sub{ font-family:'Archivo Black', sans-serif; font-size:clamp(1rem,2.4vw,1.3rem); letter-spacing:0.08em; color:var(--neon-pink); text-shadow:0 0 16px rgba(255,95,168,0.55); margin-bottom:20px; }
+  .hero .tagline{ font-style:italic; opacity:0.85; font-size:1.05rem; max-width:36ch; margin:0 auto 8px; }
+  .hero .meta{ font-family:'Space Mono', monospace; font-size:0.7rem; letter-spacing:0.08em; color:var(--rattan); margin-top:22px; }
+  .scroll-cue{ position:absolute; bottom:34px; left:50%; transform:translateX(-50%); font-family:'Space Mono', monospace; font-size:0.68rem; letter-spacing:0.15em; opacity:0.55; z-index:2; }
+
+  section{ padding:110px 6vw; max-width:1180px; margin:0 auto; }
+  .section-head{ margin-bottom:46px; }
+  .section-head h2{ font-size:clamp(1.8rem,4vw,2.6rem); margin-top:8px; }
+
+  /* Gallery */
+  .gallery{ display:grid; grid-template-columns:repeat(auto-fit, minmax(260px,1fr)); gap:14px; }
+  .gallery figure{ position:relative; overflow:hidden; aspect-ratio:4/5; border:1px solid var(--line); }
+  .gallery img{ width:100%; height:100%; object-fit:cover; display:block; filter:saturate(1.05); transition:transform .5s ease; }
+  .gallery figure:hover img{ transform:scale(1.06); }
+  .gallery figcaption{ position:absolute; bottom:0; left:0; right:0; padding:12px 14px; font-family:'Space Mono', monospace; font-size:0.68rem; letter-spacing:0.08em; text-transform:uppercase; background:linear-gradient(0deg, rgba(14,23,18,0.9), transparent); color:var(--neon-green); }
+
+  /* Menu */
+  .menu-grid{ display:grid; grid-template-columns:repeat(auto-fit, minmax(280px,1fr)); gap:1px; background:var(--line); border:1px solid var(--line); }
+  .dish{ background:var(--bg); padding:0; overflow:hidden; transition:background .3s ease; }
+  .dish .photo{ width:100%; aspect-ratio:16/10; object-fit:cover; display:block; filter:saturate(1.05); }
+  .dish .body{ padding:22px 24px 26px; }
+  .dish:hover{ background:var(--bg-2); }
+  .dish-row{ display:flex; justify-content:space-between; align-items:baseline; font-family:'Space Mono', monospace; gap:12px; }
+  .dish-row .name{ font-family:'Lora', serif; font-size:1.08rem; font-weight:600; }
+  .dish-row .dots{ flex:1; border-bottom:1px dotted var(--line); transform:translateY(-4px); }
+  .dish-row .price{ color:var(--neon-green); font-size:0.9rem; }
+  .dish p{ font-size:0.88rem; opacity:0.72; margin-top:8px; line-height:1.5; }
+  .dish .tag{ font-family:'Space Mono', monospace; font-size:0.65rem; color:var(--rattan); letter-spacing:0.1em; text-transform:uppercase; display:block; margin-top:10px;}
+
+  /* Story */
+  .story{ display:grid; grid-template-columns:1fr; gap:50px; align-items:center; }
+  @media(min-width:860px){ .story{ grid-template-columns:1fr 1fr; } }
+  .story-text p{ line-height:1.75; opacity:0.85; margin-bottom:16px; max-width:52ch; }
+  .plate-wrap{ aspect-ratio:1/1; position:relative; display:flex; align-items:center; justify-content:center; }
+  #plate-canvas{ width:100%; height:100%; }
+  .plate-caption{ position:absolute; bottom:0; left:0; right:0; text-align:center; font-family:'Space Mono', monospace; font-size:0.68rem; letter-spacing:0.12em; opacity:0.55; text-transform:uppercase; }
+
+  .services{ display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:1px; background:var(--line); border:1px solid var(--line);}
+  .service{ background:var(--bg); padding:30px 26px; }
+  .service .eyebrow{ display:block; margin-bottom:10px;}
+  .service h3{ font-size:1rem; margin-bottom:10px; }
+  .service p{ font-size:0.88rem; opacity:0.75; line-height:1.6; }
+
+  .info-grid{ display:grid; grid-template-columns:1fr; gap:40px; }
+  @media(min-width:820px){ .info-grid{ grid-template-columns:1.1fr 0.9fr; } }
+  .hours-table{ width:100%; font-family:'Space Mono', monospace; font-size:0.85rem; border-collapse:collapse; }
+  .hours-table td{ padding:9px 0; border-bottom:1px dashed var(--line); }
+  .hours-table td:last-child{ text-align:right; color:var(--neon-green); }
+  .stamp{ border:2px solid var(--neon-pink); color:var(--neon-pink); display:inline-block; padding:14px 22px; transform:rotate(-3deg); font-family:'Space Mono', monospace; letter-spacing:0.1em; text-transform:uppercase; font-size:0.78rem; margin-top:26px; text-shadow:0 0 10px rgba(255,95,168,0.5); }
+  .contact-block{ background:var(--bg-2); border:1px dashed var(--line); padding:34px; }
+  .contact-block .row{ margin-bottom:16px; }
+  .contact-block .label{ font-family:'Space Mono', monospace; font-size:0.68rem; letter-spacing:0.1em; color:var(--neon-green); text-transform:uppercase; display:block; margin-bottom:4px;}
+  .cta-btn{ display:inline-block; margin-top:10px; background:var(--neon-green); color:var(--bg); font-family:'Space Mono', monospace; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; padding:14px 26px; text-decoration:none; font-size:0.78rem; transition:transform .2s ease, background .2s ease; }
+  .cta-btn:hover{ transform:translateY(-2px); background:var(--neon-green-dim); }
+
+  footer{ padding:36px 6vw; text-align:center; font-family:'Space Mono', monospace; font-size:0.68rem; letter-spacing:0.08em; opacity:0.45; border-top:1px dashed var(--line); }
+
+  @media (prefers-reduced-motion: reduce){ html{ scroll-behavior:auto; } }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="brand">MAMBA</div>
+  <ul>
+    <li><a href="#galeria">Galería</a></li>
+    <li><a href="#carta">Carta</a></li>
+    <li><a href="#historia">Historia</a></li>
+    <li><a href="#info">Reservas</a></li>
+  </ul>
+</nav>
+
+<section class="hero">
+  <div class="hero-bg"></div>
+  <canvas id="ember-canvas"></canvas>
+  <div class="hero-inner">
+    <div class="kicker">Langreo · Asturias</div>
+    <h1>Mamba</h1>
+    <div class="sub">Gastrobar</div>
+    <p class="tagline">Fuego argentino, raíz asturiana y guiños de Asia, entre luz de neón y ratán.</p>
+    <div class="meta">TERRAZA · SALÓN · CATERING · EVENTOS PRIVADOS</div>
+  </div>
+  <div class="scroll-cue">↓ desliza para conocernos</div>
+</section>
+
+<section id="galeria">
+  <div class="section-head">
+    <span class="eyebrow">El local</span>
+    <h2>Selva, neón y brasa</h2>
+  </div>
+  <div class="gallery">
+    <figure><img src="mamba-fotos/comedor-neon.png" alt="Salón interior de Mamba Gastrobar con letrero de neón verde y lámparas de ratán"><figcaption>Salón interior</figcaption></figure>
+    <figure><img src="mamba-fotos/exterior-terraza.png" alt="Terraza exterior de Mamba Gastrobar con guirnaldas de luces"><figcaption>Terraza</figcaption></figure>
+    <figure><img src="mamba-fotos/pared-ladrillo.png" alt="Pared de ladrillo con el logo de Mamba Gastrobar"><figcaption>Rincón de la entrada</figcaption></figure>
+  </div>
+</section>
+
+<section id="carta">
+  <div class="section-head">
+    <span class="eyebrow">La carta</span>
+    <h2>Fuego, mar y fusión</h2>
+  </div>
+  <div class="menu-grid">
+    <div class="dish">
+      <img class="photo" src="mamba-fotos/entrecot.png" alt="Entrecot a la brasa con pimientos de Padrón y patatas">
+      <div class="body">
+        <div class="dish-row"><span class="name">Entrecot a la brasa</span><span class="dots"></span><span class="price">26€</span></div>
+        <p>Corte a la parrilla argentina, pimientos de Padrón y patatas fritas gruesas.</p>
+        <span class="tag">Asado · Firma</span>
+      </div>
+    </div>
+    <div class="dish">
+      <img class="photo" src="mamba-fotos/pulpo.png" alt="Pulpo a la brasa sobre crema con huevas y salsa picante">
+      <div class="body">
+        <div class="dish-row"><span class="name">Pulpo a la brasa</span><span class="dots"></span><span class="price">19€</span></div>
+        <p>Sobre crema suave, huevas de salmón, cebollino y toque picante.</p>
+        <span class="tag">Mar · Firma</span>
+      </div>
+    </div>
+    <div class="dish">
+      <div class="body">
+        <div class="dish-row"><span class="name">Gyozas de langostino</span><span class="dots"></span><span class="price">12€</span></div>
+        <p>Coral de langostino, tartar de tomate y hueva sobre masa crujiente.</p>
+        <span class="tag">Asia · Mar</span>
+      </div>
+    </div>
+    <div class="dish">
+      <div class="body">
+        <div class="dish-row"><span class="name">Bao de panceta ibérica</span><span class="dots"></span><span class="price">10€</span></div>
+        <p>Panceta braseada, salsa oriental, encurtidos y sésamo tostado.</p>
+        <span class="tag">Asia · Cerdo</span>
+      </div>
+    </div>
+    <div class="dish">
+      <div class="body">
+        <div class="dish-row"><span class="name">Nigiri de bonito</span><span class="dots"></span><span class="price">14€</span></div>
+        <p>Tartar de bonito, huevo de codorniz, salsa japonesa y cebollino.</p>
+        <span class="tag">Asia · Mar</span>
+      </div>
+    </div>
+    <div class="dish">
+      <div class="body">
+        <div class="dish-row"><span class="name">Tacos de carrillera</span><span class="dots"></span><span class="price">13€</span></div>
+        <p>Carrillera a baja temperatura, guacamole, salsa criolla y lima.</p>
+        <span class="tag">Tex-Mex · Asado</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="historia">
+  <div class="story">
+    <div class="story-text">
+      <span class="eyebrow">La historia</span>
+      <h2 style="margin:12px 0 20px;">De Argentina a Asturias</h2>
+      <p>Mamba nace del cruce entre la parrilla argentina y la despensa asturiana: mismo fuego, distinta materia prima. La brasa manda, pero la técnica viaja — de los baos asiáticos a los tacos tex-mex — sin perder el acento de casa.</p>
+      <p>Un rincón de ratán, ladrillo y neón donde cada plato sale de cocina directo, caliente y pensado para compartir.</p>
+    </div>
+    <div class="plate-wrap">
+      <canvas id="plate-canvas"></canvas>
+      <div class="plate-caption">brasa en movimiento</div>
+    </div>
+  </div>
+</section>
+
+<section id="servicios">
+  <div class="section-head">
+    <span class="eyebrow">Servicios</span>
+    <h2>Más allá de la mesa</h2>
+  </div>
+  <div class="services">
+    <div class="service"><span class="eyebrow">01</span><h3>Catering</h3><p>Llevamos la parrilla y la fusión Mamba a tu evento, con carta adaptada al espacio.</p></div>
+    <div class="service"><span class="eyebrow">02</span><h3>Eventos privados</h3><p>Reservá el local completo para celebraciones, con menú a medida.</p></div>
+    <div class="service"><span class="eyebrow">03</span><h3>Desayunos</h3><p>Antes del mediodía, otra carta: café de especialidad y platos ligeros.</p></div>
+    <div class="service"><span class="eyebrow">04</span><h3>Para llevar</h3><p>La carta Mamba, lista para disfrutar donde quieras.</p></div>
+  </div>
+</section>
+
+<section id="info">
+  <div class="info-grid">
+    <div>
+      <span class="eyebrow">Horario</span>
+      <h2 style="margin:12px 0 24px;">Cuándo encontrarnos</h2>
+      <table class="hours-table">
+        <tr><td>Lunes — Jueves</td><td>13:00–16:00 / 20:00–23:30</td></tr>
+        <tr><td>Viernes — Sábado</td><td>13:00–16:30 / 20:00–00:30</td></tr>
+        <tr><td>Domingo</td><td>13:00–16:30</td></tr>
+      </table>
+      <div class="stamp">Reserva recomendada</div>
+    </div>
+    <div class="contact-block">
+      <div class="row"><span class="label">Dirección</span>Langreo, Asturias</div>
+      <div class="row"><span class="label">Reservas</span>984 083 968</div>
+      <div class="row"><span class="label">Para grupos y catering</span>Escribinos contando fecha, comensales y ocasión.</div>
+      <a href="tel:+34984083968" class="cta-btn">Reservar mesa</a>
+    </div>
+  </div>
+</section>
+
+<footer>Mamba Gastrobar · Langreo, Asturias · #feelmamba</footer>
+
+<script>
+  (function(){
+    const canvas = document.getElementById('ember-canvas');
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 100);
+    camera.position.z = 12;
+    const renderer = new THREE.WebGLRenderer({ canvas, alpha:true, antialias:true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+
+    const count = 220;
+    const positions = new Float32Array(count*3);
+    const speeds = new Float32Array(count);
+    const cols = [0x43ffa0, 0xff5fa8];
+    const colorAttr = new Float32Array(count*3);
+    for(let i=0;i<count;i++){
+      positions[i*3] = (Math.random()-0.5)*26;
+      positions[i*3+1] = (Math.random()-0.5)*16 - 6;
+      positions[i*3+2] = (Math.random()-0.5)*14;
+      speeds[i] = 0.004 + Math.random()*0.012;
+      const c = new THREE.Color(cols[Math.random() > 0.75 ? 1 : 0]);
+      colorAttr[i*3]=c.r; colorAttr[i*3+1]=c.g; colorAttr[i*3+2]=c.b;
+    }
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(positions,3));
+    geo.setAttribute('color', new THREE.BufferAttribute(colorAttr,3));
+    const mat = new THREE.PointsMaterial({ size: 0.09, transparent:true, opacity:0.85, vertexColors:true, blending: THREE.AdditiveBlending, depthWrite:false });
+    const points = new THREE.Points(geo, mat);
+    scene.add(points);
+
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    function animate(){
+      requestAnimationFrame(animate);
+      const pos = geo.attributes.position.array;
+      for(let i=0;i<count;i++){
+        pos[i*3+1] += reduceMotion ? 0 : speeds[i];
+        if(pos[i*3+1] > 10) pos[i*3+1] = -10;
+      }
+      geo.attributes.position.needsUpdate = true;
+      points.rotation.y += reduceMotion ? 0 : 0.0006;
+      renderer.render(scene, camera);
+    }
+    animate();
+    window.addEventListener('resize', ()=>{
+      camera.aspect = window.innerWidth/window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+  })();
+
+  (function(){
+    const canvas = document.getElementById('plate-canvas');
+    const wrap = canvas.parentElement;
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
+    camera.position.set(0, 3.2, 5.2);
+    camera.lookAt(0,0,0);
+    const renderer = new THREE.WebGLRenderer({ canvas, alpha:true, antialias:true });
+
+    function resize(){
+      const s = wrap.clientWidth;
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+      renderer.setSize(s, s);
+      camera.aspect = 1;
+      camera.updateProjectionMatrix();
+    }
+    resize();
+    window.addEventListener('resize', resize);
+
+    const key = new THREE.PointLight(0x43ffa0, 2.2, 20);
+    key.position.set(3,4,3);
+    scene.add(key);
+    const key2 = new THREE.PointLight(0xff5fa8, 1.6, 20);
+    key2.position.set(-3,2,2);
+    scene.add(key2);
+    scene.add(new THREE.AmbientLight(0x2a221a, 1.1));
+
+    const plate = new THREE.Mesh(
+      new THREE.CylinderGeometry(1.9, 1.9, 0.12, 48),
+      new THREE.MeshStandardMaterial({ color:0x172019, metalness:0.3, roughness:0.4 })
+    );
+    scene.add(plate);
+
+    const rim = new THREE.Mesh(
+      new THREE.TorusGeometry(1.9, 0.05, 16, 48),
+      new THREE.MeshStandardMaterial({ color:0xc9974f, metalness:0.5, roughness:0.35 })
+    );
+    rim.rotation.x = Math.PI/2;
+    rim.position.y = 0.06;
+    scene.add(rim);
+
+    const chunkGeo = new THREE.DodecahedronGeometry(0.32, 0);
+    const chunkMat = new THREE.MeshStandardMaterial({ color:0x43a06a, roughness:0.6 });
+    const chunks = new THREE.Group();
+    for(let i=0;i<7;i++){
+      const c = new THREE.Mesh(chunkGeo, chunkMat);
+      const a = (i/7) * Math.PI*2;
+      c.position.set(Math.cos(a)*0.85, 0.22, Math.sin(a)*0.85);
+      c.scale.setScalar(0.6 + Math.random()*0.5);
+      c.rotation.set(Math.random(), Math.random(), Math.random());
+      chunks.add(c);
+    }
+    scene.add(chunks);
+
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    function animate(){
+      requestAnimationFrame(animate);
+      if(!reduceMotion){ plate.rotation.y += 0.006; chunks.rotation.y += 0.006; }
+      renderer.render(scene, camera);
+    }
+    animate();
+  })();
+</script>
+
+</body>
+</html>
